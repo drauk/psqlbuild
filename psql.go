@@ -1,5 +1,5 @@
 // src/go/psql.go   2017-9-1   Alan U. Kennington.
-// $Id: psql.go 46550 2017-09-01 03:49:50Z akenning $
+// $Id: psql.go 46551 2017-09-01 04:37:04Z akenning $
 // PostgreSQL query builder for first test program for learning "go".
 // Using version go1.1.2.
 // PostgreSQL version 8.0.3.
@@ -133,8 +133,7 @@ import "fmt"
 
 // import "net/http"
 // import "log"
-import "io"
-
+// import "io"
 // import "time"
 import "strings"
 import "strconv"
@@ -149,12 +148,6 @@ import "github.com/drauk/elist"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const formatFloat string = "%.17g"
-
-// Bad kludge. Useful for tracing functions. Assumes HTML formatting.
-var W_kludge_psql io.Writer
-
-// Activate W_kludge_psql.
-var W_kludge_psql_on bool = false
 
 //=============================================================================
 //=============================================================================
