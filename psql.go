@@ -1,5 +1,5 @@
 // src/go/psql.go   2017-9-1   Alan U. Kennington.
-// $Id: psql.go 46544 2017-08-30 14:37:02Z akenning $
+// $Id: psql.go 46550 2017-09-01 03:49:50Z akenning $
 // PostgreSQL query builder for first test program for learning "go".
 // Using version go1.1.2.
 // PostgreSQL version 8.0.3.
