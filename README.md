@@ -1,0 +1,2 @@
+# psqlbuild
+PostgreSQL command builder
