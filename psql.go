@@ -1,4 +1,4 @@
-// src/go/psql.go   2017-9-1   Alan U. Kennington.
+// src/go/psql.go   2017-9-3   Alan U. Kennington.
 // $Id: psql.go 46551 2017-09-01 04:37:04Z akenning $
 // PostgreSQL query builder for first test program for learning "go".
 // Using version go1.1.2.
@@ -120,7 +120,7 @@ Psql_select::Build
 -------------------------------------------------------------------------*/
 
 /*
-A Go-package to build PostgreSQL query strings safely and conveniently.
+A Go-package which builds PostgreSQL query strings safely and conveniently.
 
 The convenience is most noticeable for very long complex queries. The safety is
 essential for preventing SQL injections. In principle, no SQL should ever be
