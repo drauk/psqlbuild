@@ -1,5 +1,5 @@
-// src/go/psql.go   2017-9-6   Alan U. Kennington.
-// $Id: psql.go 46567 2017-09-06 13:33:04Z akenning $
+// src/go/psql.go   2017-9-10   Alan U. Kennington.
+// $Id: psql.go 46587 2017-09-10 03:12:44Z akenning $
 // PostgreSQL query builder.
 // Using version go1.1.2.
 // PostgreSQL version 8.0.3.
@@ -152,14 +152,14 @@ const formatFloat string = "%.17g"
 //=============================================================================
 //=============================================================================
 
+/*
+Common interface for all expression tree-nodes.
+Union of *psql_expr_str/num/field/op/fn.
+*/
 type psql_expr_node interface {
     //----------------------//
     //   psql_expr_node{}   //
     //----------------------//
-    /*------------------------------------------------------------------------------
-      Common interface for all expression tree-nodes.
-      Union of *psql_expr_str/num/field/op/fn.
-      ------------------------------------------------------------------------------*/
     getParent() psql_expr_node
     setParent(psql_expr_node)
     Build() (string, error)
@@ -168,15 +168,15 @@ type psql_expr_node interface {
 //=============================================================================
 //=============================================================================
 
+/*
+Parent class to be embedded in all psql_expr_node classes.
+This is effectively a parent-class for all psql_expr_node classes.
+So the code for setParent() and getParent() doesn't need multiple copies.
+*/
 type psql_expr_parent struct {
     //----------------------//
     //  psql_expr_parent::  //
     //----------------------//
-    /*------------------------------------------------------------------------------
-      Parent class to be embedded in all psql_expr_node classes.
-      This is effectively a parent-class for all psql_expr_node classes.
-      So the code for setParent() and getParent() doesn't need multiple copies.
-      ------------------------------------------------------------------------------*/
     parent psql_expr_node
 }
 
@@ -203,9 +203,9 @@ func (p *psql_expr_parent) setParent(q psql_expr_node) {
 //=============================================================================
 //=============================================================================
 
-/*------------------------------------------------------------------------------
+/*
 Literal string, which must be quoted in the PostgreSQL style.
-------------------------------------------------------------------------------*/
+*/
 type psql_expr_str struct {
     //----------------------//
     //    psql_expr_str::   //
@@ -214,9 +214,9 @@ type psql_expr_str struct {
     psql_expr_parent
 }
 
-/*------------------------------------------------------------------------------
+/*
 Clone a string expression.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_str) clone() *psql_expr_str {
     //----------------------//
     // psql_expr_str::clone //
@@ -229,9 +229,9 @@ func (p *psql_expr_str) clone() *psql_expr_str {
     return q
 }   // End of function psql_expr_str::clone.
 
-/*------------------------------------------------------------------------------
+/*
 Set a constant string expression.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_str) Set(s string) error {
     //----------------------//
     //  psql_expr_str::Set  //
@@ -243,10 +243,10 @@ func (p *psql_expr_str) Set(s string) error {
     return nil
 }   // End of function psql_expr_str::Set.
 
-/*------------------------------------------------------------------------------
+/*
 For the Postgres standard for string escape characters, see:
 https://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-CONSTANTS
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_str) Build() (string, error) {
     //--------------------------//
     //   psql_expr_str::Build   //
@@ -268,11 +268,11 @@ func (p *psql_expr_str) Build() (string, error) {
 //=============================================================================
 //=============================================================================
 
-/*------------------------------------------------------------------------------
+/*
 A numerical expression value is inserted into SQL queries as a string.
 The validity of that string _must_ be verified before setting the
 member "val" of psql_expr_num.
-------------------------------------------------------------------------------*/
+*/
 type psql_expr_num struct {
     //----------------------//
     //    psql_expr_num::   //
@@ -281,9 +281,9 @@ type psql_expr_num struct {
     psql_expr_parent
 }
 
-/*------------------------------------------------------------------------------
+/*
 Clone a number expression.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_num) clone() *psql_expr_num {
     //----------------------//
     // psql_expr_num::clone //
@@ -296,19 +296,19 @@ func (p *psql_expr_num) clone() *psql_expr_num {
     return q
 }   // End of function psql_expr_num::clone.
 
-/*------------------------------------------------------------------------------
+/*
 Set a constant numerical expression.
 The argument "v" may be an integer, float64 or a string which represents
 an integer or floating-point constant.
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 For PostgreSQL numeric constants, see
 https://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-CONSTANTS
 See section 4.1.2.4 "Numeric constants".
-digits
-digits.[digits][e[+-]digits]
-[digits].digits[e[+-]digits]
-digits e[+-]digits
-------------------------------------------------------------------------------*/
+    digits
+    digits.[digits][e[+-]digits]
+    [digits].digits[e[+-]digits]
+    digits e[+-]digits
+*/
 func (p *psql_expr_num) Set(v interface{}) error {
     //----------------------//
     //  psql_expr_num::Set  //
@@ -371,10 +371,10 @@ func (p *psql_expr_num) Set(v interface{}) error {
     return nil
 }   // End of function psql_expr_num::Set.
 
-/*------------------------------------------------------------------------------
+/*
 This function trusts that the string parameter is a valid PostgreSQL number.
 Otherwise, SQL injections may occur!
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_num) Build() (string, error) {
     //--------------------------//
     //   psql_expr_num::Build   //
@@ -388,13 +388,13 @@ func (p *psql_expr_num) Build() (string, error) {
 //=============================================================================
 //=============================================================================
 
-/*------------------------------------------------------------------------------
+/*
 Table name syntax is described here.
 https://www.postgresql.org/docs/8.0/static/sql-syntax.html
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 PostgreSQL value-expressions are described here:
 https://www.postgresql.org/docs/8.0/static/sql-expressions.html
-------------------------------------------------------------------------------*/
+*/
 type psql_expr_field struct {
     //----------------------//
     //   psql_expr_field::  //
@@ -404,9 +404,9 @@ type psql_expr_field struct {
     psql_expr_parent
 }
 
-/*------------------------------------------------------------------------------
+/*
 Clone a field expression.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_field) clone() *psql_expr_field {
     //--------------------------//
     //  psql_expr_field::clone  //
@@ -432,11 +432,11 @@ func (p *psql_expr_field) Set(tab string, fld string) error {
     return nil
 }   // End of function psql_expr_field::Set.
 
-/*------------------------------------------------------------------------------
+/*
 psql_expr_field::String only returns a string representation of this object
 for diagnostic purposes.
 Not for use in SQL query building!
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_field) String() string {
     //--------------------------//
     //  psql_expr_field::String //
@@ -447,10 +447,10 @@ func (p *psql_expr_field) String() string {
     return fmt.Sprintf("(table: \"%s\", field: \"%s\")", p.tab, p.fld)
 }   // End of function psql_expr_field::String.
 
-/*------------------------------------------------------------------------------
+/*
 Build a single field for an SQL query.
 https://www.postgresql.org/docs/8.0/static/sql-select.html#SQL-SELECT-LIST
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 This routine replaces '"' with '""' to fit the lexical rules for identifiers.
 https://www.postgresql.org/docs/8.0/static/sql-syntax.html
 
@@ -458,7 +458,7 @@ https://www.postgresql.org/docs/8.0/static/sql-syntax.html
 (To include a double quote, write two double quotes.) This allows constructing
 table or column names that would otherwise not be possible, such as ones
 containing spaces or ampersands."
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_field) Build() (string, error) {
     //--------------------------//
     //  psql_expr_field::Build  //
@@ -494,9 +494,9 @@ type psql_expr_op struct {
     psql_expr_parent
 }
 
-/*------------------------------------------------------------------------------
+/*
 Clone an operator expression.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_op) clone() *psql_expr_op {
     //----------------------//
     //  psql_expr_op::clone //
@@ -561,20 +561,20 @@ func (p *psql_expr_op) Clear() error {
     return nil
 }   // End of function psql_expr_op::Clear.
 
-/*------------------------------------------------------------------------------
+/*
 This function makes only a very rudimentary check of the correctness of
 the specified operator expression.
 It has many false positives and false negatives.
 So don't open up this function to users, especially hackers!
 It should at least accept most correct operator-expressions for my purposes.
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 Logic operators:
 https://www.postgresql.org/docs/8.0/static/functions.html#FUNCTIONS-LOGICAL
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 Possible characters in operators:
 https://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-OPERATORS
-+ - * / < > = ~ ! @ # % ^ & | ` ?
-------------------------------------------------------------------------------*/
+    + - * / < > = ~ ! @ # % ^ & | ` ?
+*/
 func (p *psql_expr_op) Set(op string,
     //----------------------//
     //   psql_expr_op::Set  //
@@ -634,11 +634,11 @@ func (p *psql_expr_op) Set(op string,
     return nil
 }   // End of function psql_expr_op::Set.
 
-/*------------------------------------------------------------------------------
+/*
 This function must recursively traverse the expression tree.
 It is assumed that the operator and the left/right expressions are valid.
 Only prefix-unary and infix-binary operators are implemented here.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_op) Build() (string, error) {
     //----------------------//
     //  psql_expr_op::Build //
@@ -682,19 +682,22 @@ func (p *psql_expr_op) Build() (string, error) {
 //=============================================================================
 //=============================================================================
 
-/*------------------------------------------------------------------------------
+/*
 The function name must be a non-empty string, which apparently
 must contain only ASCII letters and underscores.
 https://www.postgresql.org/docs/8.0/static/functions.html
+
 But probably user-defined functions can be virtually any kind of string.
 https://www.postgresql.org/docs/8.0/static/sql-createfunction.html
+
 Putting double-quotes around function names seems to be the right thing to do!
 The name-formation-rules for identifiers and key words probably apply here.
 https://
 www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-IDENTIFIERS
+
 Thus initial character is a letter or underscore, but letters can be non-Latin.
 Other letters may also be digits or dollar signs.
-------------------------------------------------------------------------------*/
+*/
 type psql_expr_fn struct {
     //----------------------//
     //    psql_expr_fn::    //
@@ -704,9 +707,9 @@ type psql_expr_fn struct {
     psql_expr_parent
 }
 
-/*------------------------------------------------------------------------------
+/*
 Clone a function expression.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_fn) clone() *psql_expr_fn {
     //----------------------//
     //  psql_expr_fn::clone //
@@ -821,9 +824,9 @@ func (p *psql_expr_fn) Clear() error {
     return nil
 }   // End of function psql_expr_fn::Clear.
 
-/*------------------------------------------------------------------------------
+/*
 Return the current number of arguments.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_fn) ArgCount() int {
     //--------------------------//
     //  psql_expr_fn::ArgCount  //
@@ -834,9 +837,9 @@ func (p *psql_expr_fn) ArgCount() int {
     return p.args.Length()
 }   // End of function psql_expr_fn::ArgCount.
 
-/*------------------------------------------------------------------------------
+/*
 Return the current nil/wrong/total numbers of arguments.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_fn) ArgCountValid() (int, int, int) {
     //------------------------------//
     //  psql_expr_fn::ArgCountValid //
@@ -881,10 +884,10 @@ func (p *psql_expr_fn) Set(name string, args ...psql_expr_node) error {
     return nil
 }   // End of function psql_expr_fn::Set.
 
-/*------------------------------------------------------------------------------
+/*
 This function must recursively traverse the expression tree.
 It is assumed that the function name and the argument expressions are valid.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_fn) Build() (string, error) {
     //----------------------//
     //  psql_expr_fn::Build //
@@ -1270,6 +1273,7 @@ func (p *Psql_expr) Build() (string, error) {
 
 //=============================================================================
 //=============================================================================
+
 /*------------------------------------------------------------------------------
 Some non-method functions to construct new Psql_expr objects with.
 ------------------------------------------------------------------------------*/
@@ -1359,9 +1363,9 @@ func Xfn(fn string, args ...*Psql_expr) *Psql_expr {
 //=============================================================================
 //=============================================================================
 
-/*------------------------------------------------------------------------------
+/*
 A psql_expr_as is a PostgreSQL expression with an optional AS-clause.
-------------------------------------------------------------------------------*/
+*/
 type psql_expr_as struct {
     //----------------------//
     //    psql_expr_as::    //
@@ -1370,9 +1374,9 @@ type psql_expr_as struct {
     as   string         // Output name. The column name in the output.
 }
 
-/*------------------------------------------------------------------------------
+/*
 NOTE: Must check that an expression cannot be used twice here?
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_as) Set(expr psql_expr_node, as string) error {
     //----------------------//
     //   psql_expr_as::Set  //
@@ -1385,12 +1389,13 @@ func (p *psql_expr_as) Set(expr psql_expr_node, as string) error {
     return nil
 }   // End of function psql_expr_as::Set.
 
-/*------------------------------------------------------------------------------
+/*
 For the Postgres standard for string escape characters, see:
 https://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-CONSTANTS
+
 Note that this function only builds the expression-string, not the as-string.
 For building the as-string, see Psql_select::SelectBuild.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_expr_as) Build() (string, error) {
     //--------------------------//
     //    psql_expr_as::Build   //
@@ -1415,22 +1420,21 @@ func (p *psql_expr_as) Build() (string, error) {
 //=============================================================================
 //=============================================================================
 
-/*------------------------------------------------------------------------------
+/*
 Common interface for all expression tree-nodes.
 Union of *psql_from_table/select/fn1/fn2/join.
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 A psql_from_item is a PostgreSQL from-item.
 https://www.postgresql.org/docs/8.0/static/sql-select.html#SQL-FROM
-1. table name/alias
-2. sub-select clause with mandatory alias
-3. function
-4. function
-5. joined from-items
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    1. table name/alias
+    2. sub-select clause with mandatory alias
+    3. function
+    4. function
+    5. joined from-items
 Options 1 and 5 are most needed initially.
 Option 5 can be a general binary tree of joins!
 Option 2 refers to a full Psql_select object!!!
-------------------------------------------------------------------------------*/
+*/
 type psql_from_node interface {
     //----------------------//
     //   psql_from_node{}   //
@@ -1443,10 +1447,10 @@ type psql_from_node interface {
 //=============================================================================
 //=============================================================================
 
-/*------------------------------------------------------------------------------
+/*
 A table-name with optional alias.
 https://www.postgresql.org/docs/8.0/static/sql-select.html
-------------------------------------------------------------------------------*/
+*/
 type psql_from_table struct {
     //----------------------//
     //   psql_from_table::  //
@@ -1493,11 +1497,11 @@ func (p *psql_from_table) Set(table string, alias string) error {
     return nil
 }   // End of function psql_from_table::Set.
 
-/*------------------------------------------------------------------------------
+/*
 This version of the from-table set-method precedes the output with "ONLY ".
 This prevents descendants of the table from being scanned.
 This will probably be required only very rarely.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_from_table) SetOnly(table string, alias string) error {
     //--------------------------//
     // psql_from_table::SetOnly //
@@ -1514,10 +1518,10 @@ func (p *psql_from_table) SetOnly(table string, alias string) error {
     return nil
 }   // End of function psql_from_table::Set.
 
-/*------------------------------------------------------------------------------
+/*
 For the Postgres standard for string escape characters, see:
 https://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-CONSTANTS
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_from_table) Build() (string, error) {
     //--------------------------//
     //  psql_from_table::Build  //
@@ -1546,12 +1550,12 @@ func (p *psql_from_table) Build() (string, error) {
 //=============================================================================
 //=============================================================================
 
-/*------------------------------------------------------------------------------
+/*
 A psql_from_item is a PostgreSQL points to a psql_from_node.
 The only benefit of this is that two separate objects in the from-list
 of a Psql_select:: object can point to the same psql_from_node.
 The field "node" is an interface which is a union of pointer-types.
-------------------------------------------------------------------------------*/
+*/
 type psql_from_item struct {
     //----------------------//
     //   psql_from_item::   //
@@ -1559,9 +1563,9 @@ type psql_from_item struct {
     node psql_from_node // From-item-node interface.
 }
 
-/*------------------------------------------------------------------------------
+/*
 NOTE: Must check that a from-node cannot be pointed to twice here?
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_from_item) Set(node psql_from_node) error {
     //----------------------//
     //  psql_from_item::Set //
@@ -1573,10 +1577,10 @@ func (p *psql_from_item) Set(node psql_from_node) error {
     return nil
 }   // End of function psql_from_item::Set.
 
-/*------------------------------------------------------------------------------
+/*
 For the Postgres standard for string escape characters, see:
 https://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-CONSTANTS
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_from_item) Build() (string, error) {
     //--------------------------//
     //   psql_from_item::Build  //
@@ -1685,11 +1689,11 @@ func Xtable(table string, alias string) *Psql_from {
 //=============================================================================
 //=============================================================================
 
-/*------------------------------------------------------------------------------
+/*
 A psql_order is a PostgreSQL expression with an optional ASC/DESC.
 NOTE: Could also add a USING clause.
 https://www.postgresql.org/docs/8.0/static/sql-select.html#SQL-ORDERBY
-------------------------------------------------------------------------------*/
+*/
 type psql_order struct {
     //----------------------//
     //     psql_order::     //
@@ -1698,10 +1702,10 @@ type psql_order struct {
     desc bool           // Descending. Default is ascending.
 }
 
-/*------------------------------------------------------------------------------
+/*
 Specified order.
 NOTE: Must check that an expression cannot be used twice here?
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_order) SetDirn(expr psql_expr_node, dirn bool) error {
     //----------------------//
     //  psql_order::SetDirn //
@@ -1714,9 +1718,9 @@ func (p *psql_order) SetDirn(expr psql_expr_node, dirn bool) error {
     return nil
 }   // End of function psql_order::SetDirb.
 
-/*------------------------------------------------------------------------------
+/*
 Ascending order.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_order) Set(expr psql_expr_node) error {
     //----------------------//
     //    psql_order::Set   //
@@ -1727,9 +1731,9 @@ func (p *psql_order) Set(expr psql_expr_node) error {
     return p.SetDirn(expr, false)
 }   // End of function psql_order::Set.
 
-/*------------------------------------------------------------------------------
+/*
 Descending order.
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_order) SetDesc(expr psql_expr_node) error {
     //----------------------//
     //  psql_order::SetDesc //
@@ -1767,15 +1771,15 @@ func (p *psql_order) Build() (string, error) {
 //=============================================================================
 //=============================================================================
 
-/*------------------------------------------------------------------------------
+/*
 A psql_limit is a PostgreSQL LIMIT-clause with optional OFFSET.
 https://www.postgresql.org/docs/8.0/static/sql-select.html#SQL-LIMIT
 The field "limit" and "offset" represent:
-limit = 0       No limit.
-limit > 0       Limit equals "limit" rows.
-offset = 0      No offset. Same as offset = 0.
-offset > 0      Offset equals "offset" rows.
-------------------------------------------------------------------------------*/
+    limit = 0       No limit.
+    limit > 0       Limit equals "limit" rows.
+    offset = 0      No offset. Same as offset = 0.
+    offset > 0      Offset equals "offset" rows.
+*/
 type psql_limit struct {
     //----------------------//
     //     psql_limit::     //
@@ -1784,10 +1788,10 @@ type psql_limit struct {
     offset uint64 // Offset for the block of rows.
 }
 
-/*------------------------------------------------------------------------------
+/*
 Set both the limit and the offset.
 Unfortunately Go does not allow default arguments!
-------------------------------------------------------------------------------*/
+*/
 func (p *psql_limit) Set(limit uint64, offset uint64) error {
     //----------------------//
     //    psql_limit::Set   //
@@ -2335,7 +2339,6 @@ func (p *Psql_select) WhereSetExpr(where *Psql_expr) error {
 Specified direction.
     dirn = false:   ascending
     dirn = true:    descending
-
 Psql_select::OrderAppend appends a user-built Psql_expr object to the
 Psql_select object's "orderby" list.
 */
