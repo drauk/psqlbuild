@@ -1,5 +1,5 @@
-// src/go/psql.go   2017-9-10   Alan U. Kennington.
-// $Id: psql.go 46587 2017-09-10 03:12:44Z akenning $
+// src/go/psql.go   2017-9-11   Alan U. Kennington.
+// $Id: psql.go 46592 2017-09-11 08:52:18Z akenning $
 // PostgreSQL query builder.
 // Using version go1.1.2.
 // PostgreSQL version 8.0.3.
@@ -163,7 +163,7 @@ type psql_expr_node interface {
     getParent() psql_expr_node
     setParent(psql_expr_node)
     Build() (string, error)
-}   // End of struct psql_expr_node{}.
+}   // End of interface psql_expr_node.
 
 //=============================================================================
 //=============================================================================
